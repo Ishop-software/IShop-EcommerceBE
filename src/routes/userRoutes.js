@@ -2,6 +2,7 @@ import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcrypt'
 import { User } from '../models/userModels.js';
+import { generateToken } from '../helper/token.js';
 
 const router = express.Router();
 
@@ -24,10 +25,13 @@ router.post("/api/user/registerUser", async (req, res) => {
             const hashedPassword = await bcrypt.hash(password, salt);
             userData.password = hashedPassword;
             const registerUser = await User.create(userData);
+            const data = {userId: userId};
+            const token = generateToken(userId);
+            console.log(token);
             if (registerUser) {
                 return res
                     .status(200)
-                    .json({ success: true, message: "User registered successfully.." });
+                    .json({ success: true, message: "User registered successfully..", token: token });
             } else {
                 return res
                     .status(500)
@@ -59,9 +63,10 @@ router.post("/api/user/loginUser", async (req, res) => {
                     message: "Please enter the valid password..",
                 });
             } else {
+                const token = generateToken(!findUserByEmail ? findUserByUsername.userId : findUserByEmail.userId);
                 return res
                     .status(200)
-                    .json({ success: true, message: "User logined successfully.." });
+                    .json({ success: true, message: "User logined successfully..", token: token });
             }
         } else {
             return res.status(400).json({
